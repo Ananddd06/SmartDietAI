@@ -1,0 +1,44 @@
+// Prisma schema for PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // make sure this is set in your .env.local
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  name      String?
+  age       Int?
+  gender    String?
+  height    Float? // in cm
+  weight    Float? // in kg
+  goal      String? // Reduce / Maintain / Gain weight
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dailyLogs DailyLog[]
+}
+
+model DailyLog {
+  id          String   @id @default(cuid())
+  userId      String
+  date        DateTime @default(now())
+  steps       Int?
+  completed   Boolean  @default(false)
+  score       Int      @default(0)
+  dietPlan    String? // JSON string
+  waterIntake Float? // in liters
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+}
