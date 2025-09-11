@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = auth();
+    const user = await currentUser();
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -14,11 +14,11 @@ export async function GET(request: NextRequest) {
     const range = searchParams.get("range") || "7d";
 
     // Get user from database
-    const user = await db.user.findUnique({
-      where: { clerkId: userId }
+    const profile = await db.user.findUnique({
+      where: { clerkId: user.id }
     });
 
-    if (!user) {
+    if (!profile) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     // Fetch daily logs within the date range
     const dailyLogs = await db.dailyLog.findMany({
       where: {
-        userId: user.id,
+        userId: profile.id,
         date: {
           gte: startDate,
           lte: endDate

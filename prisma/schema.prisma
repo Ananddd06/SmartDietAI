@@ -10,17 +10,18 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String   @unique
-  name      String?
-  age       Int?
-  gender    String?
-  height    Float? // in cm
-  weight    Float? // in kg
-  goal      String? // Reduce / Maintain / Gain weight
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  clerkId            String   @unique
+  email              String   @unique
+  name               String?
+  age                Int?
+  gender             String?
+  height             Float? // in cm
+  weight             Float? // in kg
+  goal               String? // Reduce / Maintain / Gain weight
+  onboardingComplete Boolean  @default(false) // <-- new field
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   dailyLogs DailyLog[]
 }

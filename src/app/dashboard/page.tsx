@@ -2,15 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { Activity } from "lucide-react";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { DashboardContent } from "@/components/dashboard/dashboard-content";
-import { Activity, User } from "lucide-react";
 
 export default function Dashboard() {
   const { user, isLoaded } = useUser();
+  const router = useRouter();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,16 +18,22 @@ export default function Dashboard() {
       if (!user) return;
 
       try {
-        const response = await fetch("/api/user/profile");
+        const response = await fetch("/api/user/profile", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
         if (response.ok) {
           const profile = await response.json();
           setUserProfile(profile);
         } else {
-          redirect("/onboarding");
+          router.push("/onboarding");
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
-        redirect("/onboarding");
+        router.push("/onboarding");
       } finally {
         setLoading(false);
       }
@@ -37,9 +42,9 @@ export default function Dashboard() {
     if (isLoaded && user) {
       fetchUserProfile();
     } else if (isLoaded && !user) {
-      redirect("/");
+      router.push("/");
     }
-  }, [user, isLoaded]);
+  }, [user, isLoaded, router]);
 
   if (!isLoaded || loading) {
     return (

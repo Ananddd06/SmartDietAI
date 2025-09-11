@@ -4,17 +4,18 @@ import { useUser, SignOutButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  LayoutDashboard, 
-  Activity, 
-  Apple, 
-  TrendingUp, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Activity,
+  Apple,
+  TrendingUp,
+  Settings,
   LogOut,
   Menu,
   X
 } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link"; // ✅ Import Next.js Link
 
 interface SidebarProps {
   className?: string;
@@ -46,7 +47,8 @@ export function Sidebar({ className }: SidebarProps) {
           <Avatar className="h-10 w-10">
             <AvatarImage src={user?.imageUrl} />
             <AvatarFallback>
-              {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+              {user?.firstName?.charAt(0)}
+              {user?.lastName?.charAt(0)}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
@@ -69,9 +71,12 @@ export function Sidebar({ className }: SidebarProps) {
               key={item.name}
               variant="ghost"
               className="w-full justify-start"
+              asChild // ✅ Make Button render a <Link>
             >
-              <Icon className="mr-2 h-4 w-4" />
-              {item.name}
+              <Link href={item.href}>
+                <Icon className="mr-2 h-4 w-4" />
+                {item.name}
+              </Link>
             </Button>
           );
         })}
@@ -103,14 +108,25 @@ export function Sidebar({ className }: SidebarProps) {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className={cn("hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:bg-white lg:border-r", className)}>
+      <div
+        className={cn(
+          "hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 lg:bg-white lg:border-r",
+          className
+        )}
+      >
         <SidebarContent />
       </div>
 
       {/* Mobile Sidebar */}
       {isMobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setIsMobileOpen(false)}>
-          <div className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
+          onClick={() => setIsMobileOpen(false)}
+        >
+          <div
+            className="fixed inset-y-0 left-0 w-64 bg-white shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
             <SidebarContent />
           </div>
         </div>

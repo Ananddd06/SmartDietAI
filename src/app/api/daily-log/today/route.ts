@@ -1,44 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    const { userId } = auth();
-    
-    if (!userId) {
+    const user = await currentUser();
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user from database
-    const user = await db.user.findUnique({
-      where: { clerkId: userId }
+    // Match your Clerk user with DB user
+    const dbUser = await db.user.findUnique({
+      where: { clerkId: user.id },
     });
 
-    if (!user) {
+    if (!dbUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get today's date in UTC
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Find today's daily log
     const dailyLog = await db.dailyLog.findFirst({
       where: {
-        userId: user.id,
+        userId: dbUser.id,
         date: {
           gte: today,
-          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
-        }
-      }
+          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+        },
+      },
     });
 
     if (!dailyLog) {
-      // Return empty log if none exists
       return NextResponse.json({
         id: "",
-        userId: user.id,
+        userId: dbUser.id,
         date: today.toISOString(),
         steps: null,
         completed: false,
@@ -46,13 +43,16 @@ export async function GET(request: NextRequest) {
         dietPlan: null,
         waterIntake: null,
         createdAt: today.toISOString(),
-        updatedAt: today.toISOString()
+        updatedAt: today.toISOString(),
       });
     }
 
     return NextResponse.json(dailyLog);
   } catch (error) {
     console.error("Error fetching today's daily log:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
