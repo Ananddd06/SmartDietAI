@@ -4,29 +4,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { User } from "lucide-react";
 
 export default function Onboarding() {
   const { user } = useUser();
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-
+  const [loading, setLoading] = useState(true); // Start loading until check completes
   const [formData, setFormData] = useState({
     name: "",
     age: "",
@@ -42,13 +29,13 @@ export default function Onboarding() {
 
     const checkOnboarding = async () => {
       try {
-        const res = await fetch("/api/user"); // Make sure this GET endpoint exists
+        const res = await fetch("/api/user"); // You'll need to create this GET endpoint
         const data = await res.json();
 
         if (data?.user?.onboardingComplete) {
           router.replace("/dashboard"); // ✅ Redirect onboarded users
         } else {
-          setLoading(false);
+          setLoading(false); // show form
         }
       } catch (err) {
         console.error("Error checking onboarding:", err);
@@ -59,7 +46,7 @@ export default function Onboarding() {
     checkOnboarding();
   }, [user, router]);
 
-  // Handle input change
+  // Handle input changes
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -81,7 +68,7 @@ export default function Onboarding() {
       });
 
       if (response.ok) {
-        router.push("/dashboard"); // ✅ Go to dashboard
+        router.push("/dashboard"); // ✅ after onboarding done
       } else {
         throw new Error("Failed to save user data");
       }
@@ -92,31 +79,25 @@ export default function Onboarding() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        Loading...
-      </div>
-    );
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl shadow-lg rounded-2xl">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="bg-green-100 p-3 rounded-full">
               <User className="h-8 w-8 text-green-600" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Complete Your Profile</CardTitle>
+          <CardTitle className="text-2xl">Complete Your Profile</CardTitle>
           <CardDescription>
             Tell us about yourself to get personalized health recommendations
           </CardDescription>
         </CardHeader>
-
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Row 1 */}
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
@@ -142,7 +123,6 @@ export default function Onboarding() {
               </div>
             </div>
 
-            {/* Row 2 */}
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender</Label>
@@ -157,9 +137,7 @@ export default function Onboarding() {
                     <SelectItem value="male">Male</SelectItem>
                     <SelectItem value="female">Female</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
-                    <SelectItem value="prefer-not-to-say">
-                      Prefer not to say
-                    </SelectItem>
+                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -181,7 +159,6 @@ export default function Onboarding() {
               </div>
             </div>
 
-            {/* Row 3 */}
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="height">Height (cm)</Label>
@@ -208,7 +185,12 @@ export default function Onboarding() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
               {loading ? "Saving..." : "Complete Setup"}
             </Button>
           </form>

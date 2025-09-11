@@ -8,20 +8,19 @@ datasource db {
 }
 
 model User {
-  id                 String   @id @default(cuid())
-  clerkId            String   @unique
-  email              String   @unique
+  id                 String     @id @default(cuid())
+  clerkId            String     @unique
+  email              String     @unique
   name               String?
   age                Int?
   gender             String?
-  height             Float? // in cm
-  weight             Float? // in kg
-  goal               String? // Reduce / Maintain / Gain weight
-  onboardingComplete Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-
-  dailyLogs DailyLog[]
+  height             Float?
+  weight             Float?
+  goal               String?
+  createdAt          DateTime   @default(now())
+  onboardingComplete Boolean    @default(false)
+  updatedAt          DateTime   @updatedAt
+  dailyLogs          DailyLog[]
 }
 
 model DailyLog {
@@ -31,14 +30,11 @@ model DailyLog {
   steps       Int?
   completed   Boolean  @default(false)
   score       Int      @default(0)
-  dietPlan    Json? // JSON field instead of string
-  waterIntake Float? // in liters
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dietPlan    String?
+  waterIntake Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
-  @@index([userId, date])
 }
