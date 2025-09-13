@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
           height: height ? parseFloat(height) : null,
           weight: weight ? parseFloat(weight) : null,
           goal,
+          onboardingComplete: true,
         },
       });
       return NextResponse.json({ success: true, user: updatedUser });
@@ -36,6 +37,7 @@ export async function POST(req: NextRequest) {
         height: height ? parseFloat(height) : null,
         weight: weight ? parseFloat(weight) : null,
         goal,
+        onboardingComplete: true,
       },
     });
 

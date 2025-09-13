@@ -29,13 +29,22 @@ export default function Onboarding() {
 
     const checkOnboarding = async () => {
       try {
-        const res = await fetch("/api/user"); // You'll need to create this GET endpoint
+        const res = await fetch("/api/user");
         const data = await res.json();
-
-        if (data?.user?.onboardingComplete) {
-          router.replace("/dashboard"); // ✅ Redirect onboarded users
+        console.log("Full API response:", data);
+        
+        // Check if onboarding is complete OR if user has all required fields
+        const hasCompletedOnboarding = data?.onboardingComplete === true || 
+          (data?.name && data?.age && data?.gender && data?.height && data?.weight && data?.goal);
+        
+        console.log("Has completed onboarding:", hasCompletedOnboarding);
+        
+        if (hasCompletedOnboarding) {
+          console.log("Redirecting to dashboard");
+          router.replace("/dashboard");
         } else {
-          setLoading(false); // show form
+          console.log("Showing onboarding form");
+          setLoading(false);
         }
       } catch (err) {
         console.error("Error checking onboarding:", err);
