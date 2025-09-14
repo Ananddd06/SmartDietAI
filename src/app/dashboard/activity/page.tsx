@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sidebar } from "@/components/dashboard/sidebar";
 import { Activity, Target, Zap, ArrowLeft } from "lucide-react";
 
 export default function ActivityPage() {
@@ -64,35 +65,39 @@ export default function ActivityPage() {
   }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-12">
-      
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push("/dashboard")}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Button>
+    <div className="min-h-screen bg-background">
+      <div className="flex h-screen">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto lg:ml-64 pt-16 lg:pt-0 bg-background">
+          <div className="p-4 lg:p-8 max-w-4xl mx-auto space-y-8 lg:space-y-12">
+            
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-2 text-foreground hover:text-primary"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
 
       {/* Header */}
       <div className="text-center space-y-4">
-        <div className="w-20 h-20 bg-blue-500 rounded-3xl flex items-center justify-center mx-auto">
-          <Activity className="h-10 w-10 text-white" />
+        <div className="w-16 lg:w-20 h-16 lg:h-20 bg-blue-500 rounded-3xl flex items-center justify-center mx-auto">
+          <Activity className="h-8 lg:h-10 w-8 lg:w-10 text-white" />
         </div>
-        <h1 className="text-5xl font-light text-gray-900">Activity</h1>
+        <h1 className="text-3xl lg:text-5xl font-light text-foreground">Activity</h1>
       </div>
 
       {/* Main Progress Circle */}
       <div className="flex justify-center">
-        <div className="relative w-80 h-80">
+        <div className="relative w-64 lg:w-80 h-64 lg:h-80">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
             <circle
               cx="50"
               cy="50"
               r="45"
-              stroke="#f3f4f6"
+              stroke="hsl(var(--border))"
               strokeWidth="8"
               fill="none"
             />
@@ -115,9 +120,9 @@ export default function ActivityPage() {
             </defs>
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-4xl font-light text-gray-900">{steps.toLocaleString()}</div>
-            <div className="text-sm text-gray-500 mt-1">steps today</div>
-            <div className="text-xs text-gray-400 mt-2">{Math.round(progressPercentage)}% of goal</div>
+            <div className="text-4xl font-light text-foreground">{steps.toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground mt-1">steps today</div>
+            <div className="text-xs text-muted-foreground mt-2">{Math.round(progressPercentage)}% of goal</div>
           </div>
         </div>
       </div>
@@ -126,18 +131,18 @@ export default function ActivityPage() {
       <div className="grid grid-cols-3 gap-8">
         <div className="text-center space-y-2">
           <Target className="h-6 w-6 text-blue-500 mx-auto" />
-          <div className="text-2xl font-light">{stepGoal.toLocaleString()}</div>
-          <div className="text-sm text-gray-500">Goal</div>
+          <div className="text-2xl font-light text-foreground">{stepGoal.toLocaleString()}</div>
+          <div className="text-sm text-muted-foreground">Goal</div>
         </div>
         <div className="text-center space-y-2">
           <Zap className="h-6 w-6 text-orange-500 mx-auto" />
-          <div className="text-2xl font-light">{Math.round(steps * 0.04)}</div>
-          <div className="text-sm text-gray-500">Calories</div>
+          <div className="text-2xl font-light text-foreground">{Math.round(steps * 0.04)}</div>
+          <div className="text-sm text-muted-foreground">Calories</div>
         </div>
         <div className="text-center space-y-2">
           <Activity className="h-6 w-6 text-green-500 mx-auto" />
-          <div className="text-2xl font-light">{Math.max(0, stepGoal - steps).toLocaleString()}</div>
-          <div className="text-sm text-gray-500">Remaining</div>
+          <div className="text-2xl font-light text-foreground">{Math.max(0, stepGoal - steps).toLocaleString()}</div>
+          <div className="text-sm text-muted-foreground">Remaining</div>
         </div>
       </div>
 
@@ -176,6 +181,9 @@ export default function ActivityPage() {
         </CardContent>
       </Card>
 
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

@@ -3,9 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Apple, Target, TrendingUp, Moon, Sun, Menu, X, Star, Users, Shield, Zap, BarChart3, Heart, Brain, Clock, ArrowRight, Play, Check, Github, Twitter, Linkedin } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Activity, Apple, Target, TrendingUp, Menu, X, Star, Users, Shield, Zap, BarChart3, Heart, Brain, Clock, ArrowRight, Play, Check, Github, Twitter, Linkedin } from "lucide-react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { useState, useEffect, useRef } from "react";
 
 // Custom hook for scroll animations
@@ -35,7 +35,6 @@ const useScrollAnimation = () => {
 
 export default function Home() {
   const { isSignedIn } = useUser();
-  const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -49,7 +48,7 @@ export default function Home() {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-0 shadow-lg">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl text-foreground">Welcome Back</CardTitle>
             <CardDescription>Continue your health journey</CardDescription>
           </CardHeader>
           <CardContent>
@@ -65,29 +64,22 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <Activity className="h-6 w-6 text-primary" />
-            <span className="text-xl font-semibold">HealthTracker</span>
+            <span className="text-xl font-semibold text-foreground">HealthTracker</span>
           </div>
           
           <nav className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">Features</a>
-            <a href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">How it Works</a>
-            <a href="#testimonials" className="text-sm font-medium hover:text-primary transition-colors">Reviews</a>
-            <a href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">Pricing</a>
+            <a href="#features" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Features</a>
+            <a href="#how-it-works" className="text-sm font-medium text-foreground hover:text-primary transition-colors">How it Works</a>
+            <a href="#testimonials" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Reviews</a>
+            <a href="#pricing" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Pricing</a>
           </nav>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </Button>
+            <ThemeToggle />
             <SignInButton mode="modal">
               <Button variant="outline" size="sm">Sign In</Button>
             </SignInButton>
@@ -105,12 +97,12 @@ export default function Home() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b bg-background px-4 sm:px-6 lg:px-8 p-4">
+        <div className="md:hidden border-b border-border bg-background px-4 sm:px-6 lg:px-8 p-4">
           <nav className="flex flex-col gap-4">
-            <a href="#features" className="text-sm font-medium">Features</a>
-            <a href="#how-it-works" className="text-sm font-medium">How it Works</a>
-            <a href="#testimonials" className="text-sm font-medium">Reviews</a>
-            <a href="#pricing" className="text-sm font-medium">Pricing</a>
+            <a href="#features" className="text-sm font-medium text-foreground">Features</a>
+            <a href="#how-it-works" className="text-sm font-medium text-foreground">How it Works</a>
+            <a href="#testimonials" className="text-sm font-medium text-foreground">Reviews</a>
+            <a href="#pricing" className="text-sm font-medium text-foreground">Pricing</a>
           </nav>
         </div>
       )}

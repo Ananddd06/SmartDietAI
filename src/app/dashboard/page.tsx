@@ -48,10 +48,10 @@ export default function Dashboard() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Activity className="h-12 w-12 text-green-600 mx-auto mb-4 animate-spin" />
-          <p className="text-gray-600">Loading your dashboard...</p>
+          <p className="text-foreground">Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -62,10 +62,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen bg-background">
       <div className="flex h-screen">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto lg:ml-64 pt-16 lg:pt-0 bg-background">
           <DashboardContent userProfile={userProfile} />
         </main>
       </div>

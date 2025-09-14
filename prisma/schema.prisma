@@ -8,8 +8,8 @@ datasource db {
 }
 
 model User {
-  id                 String     @id @default(cuid())
-  clerkId            String     @unique
+  id                 String     @id @default(cuid()) // internal Prisma id
+  clerkId            String     @unique // Clerk-provided user ID
   email              String     @unique
   name               String?
   age                Int?
@@ -20,21 +20,23 @@ model User {
   createdAt          DateTime   @default(now())
   onboardingComplete Boolean    @default(false)
   updatedAt          DateTime   @updatedAt
-  dailyLogs          DailyLog[]
+  dailyLogs          DailyLog[] @relation("UserLogs")
 }
 
 model DailyLog {
-  id          String   @id @default(cuid())
-  userId      String
-  date        DateTime @default(now())
-  steps       Int?
-  completed   Boolean  @default(false)
-  score       Int      @default(0)
-  dietPlan    String?
-  waterIntake Float?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String // references clerkId
+  date           DateTime @db.Date
+  steps          Int      @default(0)
+  completed      Boolean  @default(false)
+  score          Int      @default(0)
+  dietPlan       String?
+  waterIntake    Float    @default(0)
+  mealsCompleted Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation("UserLogs", fields: [userId], references: [clerkId], onDelete: Cascade)
 
   @@unique([userId, date])
 }

@@ -1,81 +1,78 @@
-import { NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+import { getAuth } from "@clerk/nextjs/server";
+import { PrismaClient } from "@prisma/client";
 
-export async function POST(req: Request) {
+const prisma = new PrismaClient();
+
+export async function POST(request: NextRequest) {
   try {
-    const user = await currentUser(); // async, gets the logged-in Clerk user
-
-    if (!user?.id) {
+    const { userId } = getAuth(request);
+    
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { steps, completed, score, dietPlan, waterIntake } = body;
-
-    // Get user from database
-    const dbUser = await db.user.findUnique({
-      where: { clerkId: user.id },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Today's date in UTC (midnight)
+    const data = await request.json();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Check if daily log exists for today
-    const existingLog = await db.dailyLog.findFirst({
+    // Get existing data first
+    const existing = await prisma.dailyLog.findUnique({
       where: {
-        userId: dbUser.id,
-        date: {
-          gte: today,
-          lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
+        userId_date: {
+          userId: userId,
+          date: today,
         },
       },
     });
 
-    let dailyLog;
+    // Merge with existing data
+    const steps = data.steps ?? existing?.steps ?? 0;
+    const water = data.waterIntake ?? existing?.waterIntake ?? 0;
+    const completed = data.completed ?? existing?.completed ?? false;
+    const dietPlan = data.dietPlan ?? existing?.dietPlan ?? "";
+    const dietScore = data.dietScore ?? existing?.dietScore ?? 0;
 
-    if (existingLog) {
-      // Update existing log
-      const updateData: any = {};
-      if (steps !== undefined) updateData.steps = steps;
-      if (completed !== undefined) updateData.completed = completed;
-      if (score !== undefined) updateData.score = score;
-      if (dietPlan !== undefined) updateData.dietPlan = JSON.stringify(dietPlan); // <-- serialize
-      if (waterIntake !== undefined) updateData.waterIntake = waterIntake;
+    // Calculate total score
+    let score = 0;
+    score += Math.min((steps / 10000) * 30, 30); // Steps: 30 points max
+    score += Math.min((water / 2.5) * 20, 20);   // Water: 20 points max  
+    score += dietScore; // Diet: up to 30 points based on completion
+    if (completed) score += 20; // Completion: 20 points
 
-      dailyLog = await db.dailyLog.update({
-        where: { id: existingLog.id },
-        data: updateData,
-      });
-    } else {
-      // Create new log
-      dailyLog = await db.dailyLog.create({
-        data: {
-          userId: dbUser.id,
-          steps: steps || null,
-          completed: completed || false,
-          score: score || 0,
-          dietPlan: dietPlan ? JSON.stringify(dietPlan) : null, // <-- serialize
-          waterIntake: waterIntake || null,
+    const dailyLog = await prisma.dailyLog.upsert({
+      where: {
+        userId_date: {
+          userId: userId,
           date: today,
         },
-      });
-    }
+      },
+      update: {
+        steps: steps,
+        waterIntake: water,
+        completed: completed,
+        dietPlan: dietPlan,
+        score: Math.round(score),
+        updatedAt: new Date(),
+      },
+      create: {
+        userId: userId,
+        date: today,
+        steps: steps,
+        waterIntake: water,
+        completed: completed,
+        dietPlan: dietPlan,
+        score: Math.round(score),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
 
-    // Parse dietPlan back to object before sending
-    const result = {
-      ...dailyLog,
-      dietPlan: dailyLog.dietPlan ? JSON.parse(dailyLog.dietPlan) : null,
-    };
-
-    return NextResponse.json(result);
-  } catch (err) {
-    console.error("Error updating daily log:", err);
+    return NextResponse.json(dailyLog);
+  } catch (error) {
+    console.error("Database error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

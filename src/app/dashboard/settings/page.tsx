@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sidebar } from "@/components/dashboard/sidebar";
 import { Settings, User, Target, ArrowLeft } from "lucide-react";
 
 export default function SettingsPage() {
@@ -38,7 +39,7 @@ export default function SettingsPage() {
     return (
       <div className="p-8 max-w-4xl mx-auto">
         <div className="flex items-center justify-center h-64">
-          <Settings className="h-8 w-8 text-gray-500 animate-spin" />
+          <Settings className="h-8 w-8 text-muted-foreground animate-spin" />
         </div>
       </div>
     );
@@ -58,24 +59,28 @@ export default function SettingsPage() {
                 'Not set';
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-12">
-      
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push("/dashboard")}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Button>
+    <div className="min-h-screen bg-background">
+      <div className="flex h-screen">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto lg:ml-64 pt-16 lg:pt-0 bg-background">
+          <div className="p-4 lg:p-8 max-w-4xl mx-auto space-y-8 lg:space-y-12">
+            
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-2 text-foreground hover:text-primary"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
 
       {/* Header */}
       <div className="text-center space-y-4">
-        <div className="w-20 h-20 bg-gray-500 rounded-3xl flex items-center justify-center mx-auto">
-          <Settings className="h-10 w-10 text-white" />
+        <div className="w-16 lg:w-20 h-16 lg:h-20 bg-gray-500 rounded-3xl flex items-center justify-center mx-auto">
+          <Settings className="h-8 lg:h-10 w-8 lg:w-10 text-white" />
         </div>
-        <h1 className="text-5xl font-light text-gray-900">Settings</h1>
+        <h1 className="text-3xl lg:text-5xl font-light text-foreground">Settings</h1>
       </div>
 
       {/* Profile Section */}
@@ -97,26 +102,26 @@ export default function SettingsPage() {
                 )}
               </div>
               <div>
-                <h2 className="text-2xl font-light text-gray-900">Profile</h2>
-                <p className="text-gray-500">Your account information</p>
+                <h2 className="text-2xl font-light text-foreground">Profile</h2>
+                <p className="text-muted-foreground">Your account information</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm text-gray-600">Name</label>
+                <label className="text-sm text-muted-foreground">Name</label>
                 <Input
                   value={displayName}
                   disabled
-                  className="h-12 border-0 bg-gray-100 text-gray-600"
+                  className="h-12 border-0 bg-muted text-muted-foreground"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm text-gray-600">Username</label>
+                <label className="text-sm text-muted-foreground">Username</label>
                 <Input
                   value={username}
                   disabled
-                  className="h-12 border-0 bg-gray-100 text-gray-600"
+                  className="h-12 border-0 bg-muted text-muted-foreground"
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -193,11 +198,14 @@ export default function SettingsPage() {
           <div className="text-sm text-gray-500">Days Active</div>
         </div>
         <div className="text-center space-y-2">
-          <div className="text-2xl font-light text-gray-900">85%</div>
-          <div className="text-sm text-gray-500">Avg Score</div>
+          <div className="text-2xl font-light text-foreground">85%</div>
+          <div className="text-sm text-muted-foreground">Avg Score</div>
         </div>
       </div>
 
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

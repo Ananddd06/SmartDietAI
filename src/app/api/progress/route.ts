@@ -1,73 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
-import { currentUser } from "@clerk/nextjs/server";
-import { db } from "@/lib/db";
+import { getAuth } from "@clerk/nextjs/server";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await currentUser();
+    const { userId } = getAuth(request);
     
-    if (!user) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const range = searchParams.get("range") || "7d";
-
-    // Get user from database
-    const profile = await db.user.findUnique({
-      where: { clerkId: user.id }
-    });
-
-    if (!profile) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Calculate date range
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
+    const range = searchParams.get('range') || '7d';
     
+    const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
     const startDate = new Date();
-    switch (range) {
-      case "7d":
-        startDate.setDate(startDate.getDate() - 7);
-        break;
-      case "30d":
-        startDate.setDate(startDate.getDate() - 30);
-        break;
-      case "90d":
-        startDate.setDate(startDate.getDate() - 90);
-        break;
-      default:
-        startDate.setDate(startDate.getDate() - 7);
-    }
+    startDate.setDate(startDate.getDate() - days);
     startDate.setHours(0, 0, 0, 0);
 
-    // Fetch daily logs within the date range
-    const dailyLogs = await db.dailyLog.findMany({
+    const dailyLogs = await prisma.dailyLog.findMany({
       where: {
-        userId: profile.id,
+        userId: userId,
         date: {
           gte: startDate,
-          lte: endDate
-        }
+        },
       },
       orderBy: {
-        date: "asc"
-      }
+        date: 'asc',
+      },
     });
 
-    // Format the data for the chart
+    // Format data for chart
     const progressData = dailyLogs.map(log => ({
       date: log.date.toISOString().split('T')[0],
-      steps: log.steps || 0,
-      score: log.score || 0,
-      waterIntake: log.waterIntake || 0,
-      completed: log.completed
+      steps: log.steps,
+      score: log.score,
+      waterIntake: log.waterIntake,
+      completed: log.completed,
     }));
 
     return NextResponse.json(progressData);
   } catch (error) {
-    console.error("Error fetching progress data:", error);
+    console.error("Database error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 }

@@ -126,29 +126,29 @@ export function ProgressChart() {
       <CardContent>
         {progressData.length === 0 ? (
           <div className="text-center py-8">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No progress data available</p>
-            <p className="text-sm text-gray-400 mt-2">Start tracking your activities to see progress</p>
+            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-foreground">No progress data available</p>
+            <p className="text-sm text-muted-foreground mt-2">Start tracking your activities to see progress</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Stats Overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{stats.avgSteps.toLocaleString()}</div>
-                <div className="text-xs text-blue-600">Avg Steps</div>
+              <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.avgSteps.toLocaleString()}</div>
+                <div className="text-xs text-blue-600 dark:text-blue-400">Avg Steps</div>
               </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{stats.avgScore}</div>
-                <div className="text-xs text-green-600">Avg Score</div>
+              <div className="text-center p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.avgScore}</div>
+                <div className="text-xs text-green-600 dark:text-green-400">Avg Score</div>
               </div>
-              <div className="text-center p-3 bg-cyan-50 rounded-lg">
-                <div className="text-2xl font-bold text-cyan-600">{stats.avgWater}L</div>
-                <div className="text-xs text-cyan-600">Avg Water</div>
+              <div className="text-center p-3 bg-cyan-50 dark:bg-cyan-950/20 rounded-lg">
+                <div className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">{stats.avgWater}L</div>
+                <div className="text-xs text-cyan-600 dark:text-cyan-400">Avg Water</div>
               </div>
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">{stats.completionRate}%</div>
-                <div className="text-xs text-purple-600">Completion</div>
+              <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.completionRate}%</div>
+                <div className="text-xs text-purple-600 dark:text-purple-400">Completion</div>
               </div>
             </div>
 
@@ -157,19 +157,26 @@ export function ProgressChart() {
               <ResponsiveContainer width="100%" height="100%">
                 {chartType === "line" ? (
                   <LineChart data={progressData}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                     <XAxis 
                       dataKey="date" 
                       tickFormatter={formatDate}
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 12, fill: 'currentColor' }}
+                      className="text-foreground"
                     />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-foreground" />
                     <Tooltip 
                       labelFormatter={formatDate}
                       formatter={(value: number, name: string) => [
                         name === "steps" ? value.toLocaleString() : value,
                         name === "steps" ? "Steps" : name === "score" ? "Score" : "Water (L)"
                       ]}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                        color: 'hsl(var(--card-foreground))'
+                      }}
                     />
                     <Line 
                       type="monotone" 
@@ -188,19 +195,26 @@ export function ProgressChart() {
                   </LineChart>
                 ) : (
                   <BarChart data={progressData}>
-                    <CartesianGrid strokeDasharray="3 3" />
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                     <XAxis 
                       dataKey="date" 
                       tickFormatter={formatDate}
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 12, fill: 'currentColor' }}
+                      className="text-foreground"
                     />
-                    <YAxis tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} className="text-foreground" />
                     <Tooltip 
                       labelFormatter={formatDate}
                       formatter={(value: number, name: string) => [
                         name === "steps" ? value.toLocaleString() : value,
                         name === "steps" ? "Steps" : name === "score" ? "Score" : "Water (L)"
                       ]}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                        color: 'hsl(var(--card-foreground))'
+                      }}
                     />
                     <Bar dataKey="steps" fill="#3b82f6" />
                     <Bar dataKey="waterIntake" fill="#06b6d4" />

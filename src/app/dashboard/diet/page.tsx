@@ -5,46 +5,98 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Apple, Target, Droplets, ArrowLeft } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Sidebar } from "@/components/dashboard/sidebar";
+import { Apple, Target, Droplets, ArrowLeft, Sparkles, RefreshCw, CheckCircle2 } from "lucide-react";
 
 export default function DietPage() {
   const router = useRouter();
+  const [score, setScore] = useState(0);
   const [waterIntake, setWaterIntake] = useState(0);
   const [waterInput, setWaterInput] = useState("");
   const [dietPlan, setDietPlan] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
+    fetchUserProfile();
     fetchTodayData();
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await fetch("/api/user/profile");
+      if (response.ok) {
+        const profile = await response.json();
+        setUserProfile(profile);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
 
   const fetchTodayData = async () => {
     try {
       const response = await fetch("/api/daily-log/today");
       if (response.ok) {
         const log = await response.json();
+        setScore(log.score || 0);
         setWaterIntake(log.waterIntake || 0);
         setWaterInput(log.waterIntake?.toString() || "");
-        setDietPlan(log.dietPlan || "");
+        
+        // Load existing diet plan if available
+        if (log.dietPlan) {
+          setDietPlan(log.dietPlan);
+        }
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+    }
+  };
+
+  const generateDietPlan = async () => {
+    if (!userProfile) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch("/api/generate-diet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userProfile }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setDietPlan(data.dietPlan);
+        
+        // Save diet plan to daily log
+        await fetch("/api/daily-log", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dietPlan: data.dietPlan }),
+        });
+      }
+    } catch (error) {
+      console.error("Error generating diet:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const updateWater = async () => {
-    const newWater = parseFloat(waterInput);
-    if (!isNaN(newWater)) {
+    const water = parseFloat(waterInput);
+    if (!isNaN(water) && water >= 0) {
       try {
         const response = await fetch("/api/daily-log", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ waterIntake: newWater }),
+          body: JSON.stringify({ waterIntake: water }),
         });
         if (response.ok) {
-          setWaterIntake(newWater);
+          const updatedLog = await response.json();
+          setWaterIntake(updatedLog.waterIntake);
+          setScore(updatedLog.score);
         }
       } catch (error) {
         console.error("Error updating water:", error);
@@ -52,133 +104,197 @@ export default function DietPage() {
     }
   };
 
-  const waterGoal = 2.5;
-  const progressPercentage = (waterIntake / waterGoal) * 100;
+  const toggleItem = (itemId: string) => {
+    const newCheckedItems = new Set(checkedItems);
+    if (newCheckedItems.has(itemId)) {
+      newCheckedItems.delete(itemId);
+    } else {
+      newCheckedItems.add(itemId);
+    }
+    setCheckedItems(newCheckedItems);
+    updateScore(newCheckedItems);
+  };
 
-  if (loading) {
-    return (
-      <div className="p-8 max-w-4xl mx-auto">
-        <div className="flex items-center justify-center h-64">
-          <Apple className="h-8 w-8 text-green-500 animate-spin" />
-        </div>
-      </div>
-    );
-  }
+  const updateScore = async (completedItems: Set<string>) => {
+    const totalItems = (dietPlan.match(/- /g) || []).length;
+    const completedCount = completedItems.size;
+    const dietScore = totalItems > 0 ? Math.round((completedCount / totalItems) * 30) : 0;
+    
+    try {
+      const response = await fetch("/api/daily-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dietScore }),
+      });
+      if (response.ok) {
+        const updatedLog = await response.json();
+        setScore(updatedLog.score);
+      }
+    } catch (error) {
+      console.error("Error updating score:", error);
+    }
+  };
+
+  const renderMarkdownDiet = (markdown: string) => {
+    if (!markdown) return null;
+
+    const lines = markdown.split('\n');
+    let itemIndex = 0;
+
+    return lines.map((line, index) => {
+      if (line.startsWith('## ')) {
+        return (
+          <h3 key={index} className="text-lg font-semibold text-foreground mt-4 mb-2">
+            {line.replace('## ', '')}
+          </h3>
+        );
+      }
+      
+      if (line.startsWith('- ')) {
+        const itemId = `item-${itemIndex++}`;
+        const itemText = line.replace('- ', '').replace('[ ]', '').trim();
+        const isChecked = checkedItems.has(itemId);
+        
+        return (
+          <div key={index} className="flex items-center gap-2 mb-2 ml-4">
+            <Checkbox
+              checked={isChecked}
+              onCheckedChange={() => toggleItem(itemId)}
+              className="h-4 w-4"
+            />
+            <span className={`text-sm ${isChecked ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+              {itemText}
+            </span>
+            {isChecked && <CheckCircle2 className="h-4 w-4 text-green-600" />}
+          </div>
+        );
+      }
+      
+      if (line.trim()) {
+        return (
+          <p key={index} className="text-sm text-muted-foreground mb-1 ml-4">
+            {line}
+          </p>
+        );
+      }
+      
+      return null;
+    });
+  };
+
+  const completedPercentage = dietPlan ? Math.round((checkedItems.size / (dietPlan.match(/- /g) || []).length) * 100) : 0;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-12">
-      
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => router.push("/dashboard")}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Button>
-
-      {/* Header */}
-      <div className="text-center space-y-4">
-        <div className="w-20 h-20 bg-green-500 rounded-3xl flex items-center justify-center mx-auto">
-          <Apple className="h-10 w-10 text-white" />
-        </div>
-        <h1 className="text-5xl font-light text-gray-900">Diet</h1>
-      </div>
-
-      {/* Main Progress Circle */}
-      <div className="flex justify-center">
-        <div className="relative w-80 h-80">
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              stroke="#f3f4f6"
-              strokeWidth="8"
-              fill="none"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              stroke="url(#gradient)"
-              strokeWidth="8"
-              fill="none"
-              strokeDasharray={`${Math.min(progressPercentage, 100) * 2.83} 283`}
-              strokeLinecap="round"
-              className="transition-all duration-1000"
-            />
-            <defs>
-              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#10b981" />
-                <stop offset="100%" stopColor="#06b6d4" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="text-4xl font-light text-gray-900">{waterIntake}L</div>
-            <div className="text-sm text-gray-500 mt-1">water today</div>
-            <div className="text-xs text-gray-400 mt-2">{Math.round(progressPercentage)}% of goal</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-8">
-        <div className="text-center space-y-2">
-          <Target className="h-6 w-6 text-green-500 mx-auto" />
-          <div className="text-2xl font-light">{waterGoal}L</div>
-          <div className="text-sm text-gray-500">Goal</div>
-        </div>
-        <div className="text-center space-y-2">
-          <Droplets className="h-6 w-6 text-blue-500 mx-auto" />
-          <div className="text-2xl font-light">{Math.round((waterIntake / waterGoal) * 8)}</div>
-          <div className="text-sm text-gray-500">Glasses</div>
-        </div>
-        <div className="text-center space-y-2">
-          <Apple className="h-6 w-6 text-orange-500 mx-auto" />
-          <div className="text-2xl font-light">{Math.max(0, waterGoal - waterIntake).toFixed(1)}L</div>
-          <div className="text-sm text-gray-500">Remaining</div>
-        </div>
-      </div>
-
-      {/* Input */}
-      <Card className="max-w-md mx-auto border-0 shadow-sm">
-        <CardContent className="p-8 space-y-6">
-          <div className="flex gap-3">
-            <Input
-              type="number"
-              step="0.1"
-              placeholder="Enter liters"
-              value={waterInput}
-              onChange={(e) => setWaterInput(e.target.value)}
-              className="flex-1 h-12 border-0 bg-gray-50 text-center text-lg"
-            />
-            <Button 
-              onClick={updateWater}
-              className="h-12 px-8 bg-green-500 hover:bg-green-600"
+    <div className="min-h-screen bg-background">
+      <div className="flex h-screen">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto lg:ml-64 pt-16 lg:pt-0 bg-background">
+          <div className="p-4 lg:p-8 max-w-4xl mx-auto space-y-8 lg:space-y-12">
+            
+            {/* Back Button */}
+            <Button
+              variant="ghost"
+              onClick={() => router.push("/dashboard")}
+              className="flex items-center gap-2 text-foreground hover:text-primary"
             >
-              Update
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
             </Button>
-          </div>
-          
-          <div className="grid grid-cols-5 gap-2">
-            {[0.5, 1, 1.5, 2, 2.5].map((amount) => (
-              <Button
-                key={amount}
-                variant="ghost"
-                size="sm"
-                onClick={() => setWaterInput(amount.toString())}
-                className="h-10 text-xs text-gray-600 hover:bg-gray-100"
-              >
-                {amount}L
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
+            {/* Header */}
+            <div className="text-center space-y-4">
+              <div className="w-16 lg:w-20 h-16 lg:h-20 bg-green-500 rounded-3xl flex items-center justify-center mx-auto">
+                <Apple className="h-8 lg:h-10 w-8 lg:w-10 text-white" />
+              </div>
+              <h1 className="text-3xl lg:text-5xl font-light text-foreground">Diet</h1>
+              <p className="text-muted-foreground">Score: {score}/100</p>
+            </div>
+
+            {/* Water Intake */}
+            <Card className="max-w-md mx-auto">
+              <CardContent className="p-6 space-y-4">
+                <h3 className="text-xl font-light text-foreground text-center">Water Intake</h3>
+                <div className="flex gap-3">
+                  <Input
+                    type="number"
+                    step="0.1"
+                    placeholder="Enter liters"
+                    value={waterInput}
+                    onChange={(e) => setWaterInput(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button onClick={updateWater} className="bg-blue-500 hover:bg-blue-600">
+                    Update
+                  </Button>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-foreground">{waterIntake}L</div>
+                  <div className="text-sm text-muted-foreground">Goal: 2.5L</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Diet Plan */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-light text-foreground flex items-center gap-2">
+                    <Apple className="h-5 w-5 text-green-600" />
+                    AI Diet Plan
+                    <Sparkles className="h-4 w-4 text-yellow-500" />
+                  </h3>
+                  
+                  {dietPlan && (
+                    <div className="text-sm text-muted-foreground">
+                      {completedPercentage}% complete
+                    </div>
+                  )}
+                </div>
+
+                <Button 
+                  onClick={generateDietPlan} 
+                  disabled={loading || !userProfile}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {loading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {dietPlan ? "Regenerate Diet Plan" : "Generate Diet Plan"}
+                    </>
+                  )}
+                </Button>
+
+                {dietPlan ? (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    {renderMarkdownDiet(dietPlan)}
+                    
+                    <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                      <p className="text-sm text-green-700 dark:text-green-400">
+                        💡 Complete diet items to earn up to 30 points towards your daily score!
+                      </p>
+                      <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+                        Progress: {checkedItems.size} items completed
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Apple className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Click "Generate Diet Plan" to get your personalized meal plan</p>
+                    <p className="text-xs mt-2">Or check your dashboard if you already generated one</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
