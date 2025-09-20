@@ -1,4 +1,4 @@
-## ✨ Technology Stack Used In this Projects
+## ✨ Technology Stack Used In this Projects ✨
 
 This scaffold provides a robust foundation built with:
 
